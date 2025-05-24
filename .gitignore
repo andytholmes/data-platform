@@ -1,12 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -20,6 +16,81 @@ parts/
 sdist/
 var/
 wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+# Keep actual notebooks
+!*.ipynb
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Data directories
+data/
+data/input/
+data/output/
+!data/.gitkeep
+!data/input/.gitkeep
+!data/output/.gitkeep
+
+# Airflow
+airflow.cfg
+airflow.db
+airflow-webserver.pid
+webserver_config.py
+
+# Spark
+spark-event-logs/
+spark-local-*/
+
+# SQL Server
+*.bak
+*.ldf
+*.mdf
+*.ndf
+
+# Trino
+trino/var/
+trino/data/
+
+# Keep important config files
+!**/config.properties
+!**/jvm.config
+!**/catalog/*.properties
+!**/spark-defaults.conf
+!**/Dockerfile
+!**/docker-compose.yml
+!**/requirements.txt
+!**/README.md
+!**/CHANGELOG.md
+
+# Distribution / packaging
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -56,7 +127,6 @@ cover/
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -74,9 +144,6 @@ docs/_build/
 # PyBuilder
 .pybuilder/
 target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
 
 # IPython
 profile_default/
@@ -118,15 +185,6 @@ celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
 # Spyder project settings
 .spyderproject

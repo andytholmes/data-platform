@@ -15,6 +15,7 @@ graph TB
         subgraph SparkCluster[Spark Cluster]
             SparkMaster[Spark Master<br/>Resource Management]
             SparkWorker[Spark Worker<br/>Task Execution]
+            SparkHistoryServer[Spark History Server<br/>View Completed Applications]
         end
         SQL[SQL Server 2019<br/>Relational Database]
         Trino[Trino<br/>Distributed SQL Engine]
@@ -35,6 +36,7 @@ graph TB
     AirflowWeb -->|Metadata| Postgres
     AirflowSched -->|Task Scheduling| AirflowWeb
     SparkMaster -->|Distributes Tasks| SparkWorker
+    SparkMaster -->|Event Logs| SparkHistoryServer
     SparkWorker -->|Reads/Writes| Data[(Data Lake)]
     Trino -->|Queries| SQL
     Trino -->|Reads| Data
@@ -49,6 +51,7 @@ graph TB
     SQL -- "Port 1433<br/>SQL Queries" --> Host
     SparkMaster -- "Port 7077<br/>Master UI" --> Host
     SparkMaster -- "Port 8080<br/>Application UI" --> Host
+    SparkHistoryServer -- "Port 18080<br/>History UI" --> Host
 
     %% Styling
     classDef docker fill:#2d2d2d,stroke:#00ff00,stroke-width:2px,color:#ffffff
@@ -56,7 +59,7 @@ graph TB
     classDef data fill:#4d4d4d,stroke:#00ff00,stroke-width:2px,color:#ffffff
     classDef airflow fill:#2d2d2d,stroke:#0066ff,stroke-width:2px,color:#ffffff
     classDef spark fill:#2d2d2d,stroke:#ff9900,stroke-width:2px,color:#ffffff
-    class AirflowInit,AirflowWeb,AirflowSched,SparkMaster,SparkWorker,SQL,Trino,Jupyter,Postgres docker
+    class AirflowInit,AirflowWeb,AirflowSched,SparkMaster,SparkWorker,SparkHistoryServer,SQL,Trino,Jupyter,Postgres docker
     class Host host
     class Data data
     class AirflowServices airflow
@@ -121,7 +124,8 @@ docker compose up --build
 
 ### Jupyter Notebook
 - URL: http://localhost:8888
-- Token: your_jupyter_token_here (as specified in docker-compose.yml)
+- Password: jupyter
+- The Jupyter service uses the official `jupyter/datascience-notebook` image without additional dependencies.
 
 ### SQL Server
 - Host: localhost
@@ -133,6 +137,17 @@ docker compose up --build
 ### Spark UI
 - Master UI: http://localhost:7077
 - Application UI: http://localhost:8080
+
+### Spark History Server
+- URL: http://localhost:18080
+- Purpose: The Spark History Server provides a web UI to view completed Spark applications, their event logs, and job details. It is useful for debugging, performance analysis, and auditing past Spark jobs.
+- Event Logs Directory: `/opt/bitnami/spark/event-logs` (inside the container)
+- The event logs are shared between the Spark containers and the History Server via a Docker volume.
+- If you do not see completed applications:
+  - Ensure your Spark jobs are configured to enable event logging and write to the correct directory.
+  - Check that the event log files exist in the shared directory.
+  - Review the History Server container logs for errors.
+  - Confirm the volume mount in `docker-compose.yml` is correct.
 
 ## Development Workflow
 

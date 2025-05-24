@@ -102,6 +102,7 @@ services:
       - ./jobs:/opt/bitnami/spark/jobs
       - ./data:/opt/bitnami/spark/data
       - spark-event-logs:/opt/bitnami/spark/event-logs
+      - ./spark/conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -115,7 +116,10 @@ services:
       - SPARK_HISTORY_FS_LOGDIRECTORY=/opt/bitnami/spark/event-logs
       - SPARK_MASTER_OPTS="-Dspark.eventLog.enabled=true -Dspark.eventLog.dir=/opt/bitnami/spark/event-logs"
     command: >
-      bash -c "mkdir -p /opt/bitnami/spark/event-logs && chown -R 1001:1001 /opt/bitnami/spark/event-logs && /opt/bitnami/spark/sbin/start-master.sh"
+      bash -c "
+        mkdir -p /opt/bitnami/spark/event-logs &&
+        /opt/bitnami/spark/sbin/start-master.sh
+      "
 
   spark-history-server:
     build:
@@ -126,11 +130,16 @@ services:
       - "18080:18080"  # History Server UI
     volumes:
       - spark-event-logs:/opt/bitnami/spark/event-logs
+      - ./spark/conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
     environment:
       - SPARK_MODE=history-server
       - SPARK_HISTORY_OPTS="-Dspark.history.fs.logDirectory=/opt/bitnami/spark/event-logs -Dspark.history.fs.cleaner.enabled=true -Dspark.history.fs.cleaner.interval=1d -Dspark.history.fs.cleaner.maxAge=7d"
     command: >
-      bash -c "mkdir -p /opt/bitnami/spark/event-logs && chown -R 1001:1001 /opt/bitnami/spark/event-logs && /opt/bitnami/spark/sbin/start-history-server.sh"
+      bash -c "
+        mkdir -p /opt/bitnami/spark/event-logs &&
+        export SPARK_HISTORY_OPTS='-Dspark.history.fs.logDirectory=/opt/bitnami/spark/event-logs -Dspark.history.fs.cleaner.enabled=true -Dspark.history.fs.cleaner.interval=1d -Dspark.history.fs.cleaner.maxAge=7d' &&
+        /opt/bitnami/spark/sbin/start-history-server.sh
+      "
     depends_on:
       - spark
 
@@ -143,6 +152,7 @@ services:
       - ./jobs:/opt/bitnami/spark/jobs
       - ./data:/opt/bitnami/spark/data
       - spark-event-logs:/opt/bitnami/spark/event-logs
+      - ./spark/conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
@@ -156,7 +166,10 @@ services:
       - SPARK_EVENT_LOG_DIR=/opt/bitnami/spark/event-logs
       - SPARK_WORKER_OPTS="-Dspark.eventLog.enabled=true -Dspark.eventLog.dir=/opt/bitnami/spark/event-logs"
     command: >
-      bash -c "mkdir -p /opt/bitnami/spark/event-logs && chown -R 1001:1001 /opt/bitnami/spark/event-logs && /opt/bitnami/spark/sbin/start-worker.sh spark://spark:7077"
+      bash -c "
+        mkdir -p /opt/bitnami/spark/event-logs &&
+        /opt/bitnami/spark/sbin/start-worker.sh spark://spark:7077
+      "
     depends_on:
       - spark
 
@@ -188,17 +201,25 @@ services:
       - sqlserver
 
   jupyter:
-    image: jupyter/datascience-notebook:latest
-    platform: linux/arm64/v8
-    container_name: jupyter
+    build:
+      context: .
+      dockerfile: docker/jupyter/Dockerfile
     ports:
       - "8888:8888"
     volumes:
-      - ./notebooks:/home/jovyan/work
+      - .:/home/jovyan/work
     environment:
-      - JUPYTER_ENABLE_LAB=yes
-      - JUPYTER_TOKEN=your_jupyter_token_here
-    restart: unless-stopped
+      - JUPYTER_TOKEN=
+    command: >
+      bash -c '
+        jupyter notebook --generate-config &&
+        echo "c.NotebookApp.password = \"$(python /home/jovyan/work/docker/jupyter/set_password.py)\"" >> ~/.jupyter/jupyter_notebook_config.py &&
+        jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+      '
+    depends_on:
+      - spark
+      - sqlserver
+      - trino
 
 volumes:
   postgres-db-volume:

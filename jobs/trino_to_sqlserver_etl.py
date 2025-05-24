@@ -32,7 +32,7 @@ def extract_from_trino(spark, table_name):
     # Read from Trino using JDBC
     trino_df = (spark.read
                 .format("jdbc")
-                .option("url", "jdbc:trino://trino:8080")
+                .option("url", "jdbc:trino://trino:8080/sqlserver")
                 .option("driver", "io.trino.jdbc.TrinoDriver")
                 .option("user", "trino")
                 .option("dbtable", table_name)

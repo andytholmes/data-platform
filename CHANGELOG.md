@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Data Platform project will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,35 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project setup with Airflow, Spark, SQL Server, Trino, and Jupyter services
-- ETL pipeline implementation with PySpark
-- Unit tests for ETL functionality
-- Comprehensive README.md with architecture diagram
-- Docker configuration for all services
-- PostgreSQL database for Airflow metadata
-- Airflow initialization and user creation scripts
+- Created a health check Jupyter notebook (`notebooks/health_check.ipynb`) to monitor the status of all services
+- Added Spark History Server documentation to README.md
+- Added Jupyter Notebook password configuration
+- Added trino Python package (v0.330.0) to requirements.txt for Jupyter notebook integration
+- Added comprehensive .gitignore file to exclude unnecessary files while keeping important configurations
+- Added .gitkeep files to maintain data directory structure
 
 ### Changed
-- Removed obsolete `version` field from docker-compose.yml to resolve Docker Compose warning
-- Updated project structure to follow best practices
-- Improved documentation with detailed service descriptions
-- Changed Java package from `openjdk-11-jre-headless` to `default-jre-headless` in Airflow Dockerfile
-- Updated port mappings to resolve conflicts:
-  - Airflow UI: 8081 (was 8080)
-  - Trino UI: 8082 (was 8080)
-- Added platform specification for ARM64 architecture support
-- Enhanced Airflow configuration with proper database settings
-- Added health checks for PostgreSQL service
+- Moved Spark configuration from `conf/spark-defaults.conf` to `spark/conf/spark-defaults.conf` for better organization
+- Updated Trino SQL Server connector configuration to use correct Docker service name
+- Updated Jupyter service configuration to use password authentication instead of token
+- Updated .gitignore to specifically ignore data/input and data/output directories while maintaining directory structure
 
 ### Fixed
-- Docker Compose warning about obsolete version attribute
-- Port conflicts in docker-compose.yml
-- Directory structure organization
-- Java installation issue in Airflow container build
-- Platform mismatch issues for SQL Server and Spark containers
-- Port allocation conflicts between Airflow and Trino
-- Airflow initialization and database connection issues
-- Jupyter authentication issues
+- Fixed Trino SQL Server connection issue by updating hostname from `sqlserver2019` to `sqlserver`
+- Fixed Jupyter Notebook password authentication issues
+- Fixed Spark event logging configuration
+
+### Security
+- Set up Jupyter Notebook with password authentication
+- Configured SQL Server with secure password
+- Enabled SSL for Trino connections
 
 ## [0.1.0] - 2024-03-19
 

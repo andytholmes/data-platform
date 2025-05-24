@@ -9,7 +9,8 @@ COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
 # Create directories for data and jars
-RUN mkdir -p /opt/bitnami/spark/data/input /opt/bitnami/spark/data/output /opt/bitnami/spark/jars
+RUN mkdir -p /opt/bitnami/spark/data/input /opt/bitnami/spark/data/output /opt/bitnami/spark/jars /opt/bitnami/spark/event-logs && \
+    chown -R 1001:1001 /opt/bitnami/spark
 
 # Download JDBC drivers
 RUN curl -L https://repo1.maven.org/maven2/io/trino/trino-jdbc/412/trino-jdbc-412.jar -o /opt/bitnami/spark/jars/trino-jdbc.jar && \
