@@ -1,0 +1,21 @@
+name: data-platform
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pyspark=3.3.0
+  - pytest
+  - pandas
+  - numpy
+  - jupyter
+  - pip
+  - pip:
+    - apache-airflow==2.8.0
+    - apache-airflow-providers-apache-spark==4.11.3
+    - apache-airflow-providers-microsoft-mssql==3.9.2
+    - apache-airflow-providers-postgres==5.14.0
+    - trino==0.334.0
+    - pymssql==2.3.4
+    - sqlalchemy==1.4.54
+    - psycopg2-binary==2.9.10 

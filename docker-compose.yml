@@ -1,0 +1,205 @@
+services:
+  postgres:
+    image: postgres:13
+    platform: linux/arm64/v8
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    platform: linux/arm64/v8
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./tests:/opt/airflow/tests
+      - ./data:/opt/bitnami/spark/data
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_SCHEMA=public
+      - AIRFLOW__WEBSERVER__SECRET_KEY=your_secret_key_here
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: airflow webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    platform: linux/arm64/v8
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./tests:/opt/airflow/tests
+      - ./data:/opt/bitnami/spark/data
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_SCHEMA=public
+      - AIRFLOW__WEBSERVER__SECRET_KEY=your_secret_key_here
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: airflow scheduler
+
+  airflow-init:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    platform: linux/arm64/v8
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_SCHEMA=public
+      - AIRFLOW__WEBSERVER__SECRET_KEY=your_secret_key_here
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "airflow db init && airflow users create --username airflow --firstname Admin --lastname User --role Admin --email admin@example.com --password airflow"
+
+  spark:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    platform: linux/arm64/v8
+    ports:
+      - "7077:7077"  # Master UI
+      - "8080:8080"  # Application UI
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/bitnami/spark/data
+      - spark-event-logs:/opt/bitnami/spark/event-logs
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_IPS=spark
+      - SPARK_PUBLIC_DNS=spark
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+      - SPARK_EVENT_LOG_ENABLED=true
+      - SPARK_EVENT_LOG_DIR=/opt/bitnami/spark/event-logs
+      - SPARK_HISTORY_FS_LOGDIRECTORY=/opt/bitnami/spark/event-logs
+      - SPARK_MASTER_OPTS="-Dspark.eventLog.enabled=true -Dspark.eventLog.dir=/opt/bitnami/spark/event-logs"
+    command: >
+      bash -c "mkdir -p /opt/bitnami/spark/event-logs && chown -R 1001:1001 /opt/bitnami/spark/event-logs && /opt/bitnami/spark/sbin/start-master.sh"
+
+  spark-history-server:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    platform: linux/arm64/v8
+    ports:
+      - "18080:18080"  # History Server UI
+    volumes:
+      - spark-event-logs:/opt/bitnami/spark/event-logs
+    environment:
+      - SPARK_MODE=history-server
+      - SPARK_HISTORY_OPTS="-Dspark.history.fs.logDirectory=/opt/bitnami/spark/event-logs -Dspark.history.fs.cleaner.enabled=true -Dspark.history.fs.cleaner.interval=1d -Dspark.history.fs.cleaner.maxAge=7d"
+    command: >
+      bash -c "mkdir -p /opt/bitnami/spark/event-logs && chown -R 1001:1001 /opt/bitnami/spark/event-logs && /opt/bitnami/spark/sbin/start-history-server.sh"
+    depends_on:
+      - spark
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    platform: linux/arm64/v8
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/bitnami/spark/data
+      - spark-event-logs:/opt/bitnami/spark/event-logs
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_IPS=spark-worker
+      - SPARK_PUBLIC_DNS=spark-worker
+      - SPARK_EVENT_LOG_ENABLED=true
+      - SPARK_EVENT_LOG_DIR=/opt/bitnami/spark/event-logs
+      - SPARK_WORKER_OPTS="-Dspark.eventLog.enabled=true -Dspark.eventLog.dir=/opt/bitnami/spark/event-logs"
+    command: >
+      bash -c "mkdir -p /opt/bitnami/spark/event-logs && chown -R 1001:1001 /opt/bitnami/spark/event-logs && /opt/bitnami/spark/sbin/start-worker.sh spark://spark:7077"
+    depends_on:
+      - spark
+
+  sqlserver:
+    build:
+      context: .
+      dockerfile: docker/sqlserver/Dockerfile
+    platform: linux/arm64/v8
+    container_name: sqlserver2019
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+    ports:
+      - "1433:1433"
+    restart: unless-stopped
+    volumes:
+      - ./sqlserver:/var/opt/mssql/backup
+    mem_limit: 2g
+
+  trino:
+    image: trinodb/trino:latest
+    platform: linux/arm64/v8
+    container_name: trino
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./trino/etc:/etc/trino
+    depends_on:
+      - sqlserver
+
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    platform: linux/arm64/v8
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=your_jupyter_token_here
+    restart: unless-stopped
+
+volumes:
+  postgres-db-volume:
+  spark-event-logs:
