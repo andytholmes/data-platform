@@ -1,15 +1,24 @@
+# This file defines the Conda environment for local development
+# It's kept in the root directory for easy access and standard project structure
+# Use this for local development: conda env create -f environment.yml
+# Note: Docker containers use requirements.txt instead
+
 name: data-platform
 channels:
   - conda-forge
   - defaults
 dependencies:
   - python=3.9
+  - pip
+  - pip:
+    - -r requirements.txt  # Install packages from requirements.txt
+  - jupyter
+  - notebook
+  - ipykernel
   - pyspark=3.3.0
   - pytest
   - pandas
   - numpy
-  - jupyter
-  - pip
   - pip:
     - apache-airflow==2.8.0
     - apache-airflow-providers-apache-spark==4.11.3

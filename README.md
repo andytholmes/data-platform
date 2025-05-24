@@ -181,22 +181,42 @@ conda env update -f environment.yml
 
 ```
 data-platform/
-├── dags/              # Airflow DAGs
-├── jobs/              # Spark jobs
-├── tests/             # Unit tests
-├── data/              # Data files
-├── notebooks/         # Jupyter notebooks
-├── docker/            # Docker configurations
-│   ├── airflow/      # Airflow Dockerfile
-│   ├── spark/        # Spark Dockerfile
-│   └── sqlserver/    # SQL Server Dockerfile
-├── trino/            # Trino configuration
-├── sqlserver/        # SQL Server data
-├── environment.yml   # Conda environment
-├── setup_env.sh      # Environment setup script
-├── docker-compose.yml
-└── README.md
+├── requirements.txt           # Python package dependencies for Docker and local development
+├── environment.yml           # Conda environment specification for local development
+├── docker/                   # Docker-related files
+│   ├── airflow/             # Airflow service configuration
+│   ├── jupyter/             # Jupyter service configuration
+│   └── spark/               # Spark service configuration
+└── docker-compose.yml       # Docker Compose configuration
 ```
+
+## Environment Setup
+
+### Local Development
+For local development, we use Conda to manage Python environments:
+
+1. Create the Conda environment:
+   ```bash
+   conda env create -f environment.yml
+   ```
+
+2. Activate the environment:
+   ```bash
+   conda activate data-platform
+   ```
+
+### Docker Development
+For Docker-based development:
+
+1. Build and start the containers:
+   ```bash
+   docker compose up --build
+   ```
+
+### Environment Files
+- `requirements.txt`: Contains Python package dependencies used by both Docker containers and local development
+- `environment.yml`: Defines the Conda environment for local development, including Python version and core packages
+- Both files are kept in the root directory for standard project structure and easy access
 
 ## Contributing
 

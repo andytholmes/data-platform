@@ -1,3 +1,9 @@
+# This file is used for both Docker container dependencies and local development
+# It's kept in the root directory to be accessible by both Docker and local environments
+# For Docker: Used during container builds to install Python packages
+# For local: Can be used with pip install -r requirements.txt
+# Note: For local development, prefer using environment.yml with conda
+
 pyspark==3.3.0
 pytest==7.4.0
 pytest-cov==4.1.0
@@ -5,4 +11,5 @@ apache-airflow==2.8.0
 apache-airflow-providers-apache-spark==4.1.0
 psycopg2-binary==2.9.9
 cryptography==41.0.7
-trino==0.330.0 
+trino==0.330.0
+jupyter-server==2.14.0
